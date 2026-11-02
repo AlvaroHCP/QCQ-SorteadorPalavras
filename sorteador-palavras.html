@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteador de Palavras</title>
+<style>
+  :root {
+    --azul: #3b82f6;
+    --indigo: #6366f1;
+    --roxo: #8b5cf6;
+    --magenta: #d946ef;
+    --rosa: #ec4899;
+    --primaria: #8b5cf6;
+    --primaria-escura: #6366f1;
+    --gradiente: linear-gradient(90deg, var(--azul), var(--roxo), var(--rosa));
+    --fundo: linear-gradient(135deg, #e6f0ff 0%, #f3e8ff 50%, #ffe4f1 100%);
+    --texto: #2e2a5a;
+    --branco: #ffffff;
+    --sombra: rgba(99, 102, 241, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fundo) fixed;
+    color: var(--texto);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .cartao {
+    background: var(--branco);
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 28px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px var(--sombra);
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 1.6rem;
+    background: var(--gradiente);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  p.descricao {
+    margin: 0 0 24px;
+    color: #6b6890;
+    font-size: 0.95rem;
+  }
+
+  label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    border: 2px solid #d6d3f5;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    outline: none;
+  }
+
+  input[type="number"]:focus {
+    border-color: var(--roxo);
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px 20px;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  button:active { transform: scale(0.98); }
+
+  .btn-sortear {
+    width: 100%;
+    background: var(--gradiente);
+    color: var(--branco);
+    box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35);
+  }
+
+  .btn-sortear:hover { filter: brightness(1.08); }
+
+  .erro {
+    color: #d63031;
+    font-size: 0.9rem;
+    min-height: 1.2em;
+    margin: -12px 0 12px;
+    text-align: left;
+  }
+
+  /* Modal */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 18, 40, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 10;
+  }
+
+  .overlay.aberto { display: flex; }
+
+  .modal {
+    background: var(--branco);
+    width: 85vw;
+    max-width: 600px;
+    height: 85vh;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px var(--sombra);
+    overflow: hidden;
+  }
+
+  @media (min-width: 768px) {
+    .modal {
+      width: 85vw;
+      max-width: 900px;
+    }
+
+    .lista-palavras {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .modal-cabecalho {
+    padding: 20px 24px 12px;
+    border-bottom: 3px solid transparent;
+    border-image: var(--gradiente) 1;
+  }
+
+  .modal-cabecalho h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    background: var(--gradiente);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .modal-corpo {
+    padding: 16px 24px;
+    overflow-y: auto;
+  }
+
+  .aviso {
+    font-size: 0.85rem;
+    color: #b7791f;
+    margin: 0 0 12px;
+  }
+
+  .lista-palavras {
+    margin: 0;
+    padding-left: 0;
+    list-style-position: inside;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .lista-palavras li {
+    background: linear-gradient(90deg, #e6f0ff, #f3e8ff 50%, #ffe4f1);
+    color: var(--indigo);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: filter 0.2s, color 0.2s;
+  }
+
+  .lista-palavras li:hover {
+    filter: brightness(0.96);
+  }
+
+  .lista-palavras li::marker {
+    font-weight: 700;
+    color: var(--magenta);
+  }
+
+  .lista-palavras li.usada {
+    background: #f1f1f3;
+    color: #9a9aa3;
+    text-decoration: line-through;
+  }
+
+  .lista-palavras li.usada:hover {
+    background: #e8e8ec;
+  }
+
+  .modal-rodape {
+    padding: 16px 24px;
+    border-top: 1px solid #ecebf7;
+  }
+
+  .btn-fechar {
+    width: 100%;
+    background: var(--gradiente);
+    color: var(--branco);
+  }
+
+  .btn-fechar:hover { filter: brightness(1.08); }
+
+  .contador {
+    margin-top: 16px;
+    font-size: 0.85rem;
+    color: #8a87a8;
+  }
+</style>
+</head>
+<body>
+
+<main class="cartao">
+  <h1 style="margin-bottom: 30px; text-transform: uppercase;">Quartou com o Quarteto</h1>
+  <h1>Sorteador de Palavras</h1>
+  <p class="descricao">Sorteie palavras para o seu jogo de adivinhação.</p>
+
+  <label for="quantidade">Quantidade de palavras</label>
+  <input type="number" id="quantidade" min="1" value="15">
+  <div class="erro" id="erro"></div>
+
+  <button class="btn-sortear" id="btn-sortear">Sortear</button>
+
+  <div class="contador" id="contador"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titulo-modal">
+    <div class="modal-cabecalho">
+      <h2 id="titulo-modal">Palavras sorteadas</h2>
+    </div>
+    <div class="modal-corpo">
+      <p class="aviso" id="aviso" hidden></p>
+      <ol class="lista-palavras" id="lista"></ol>
+    </div>
+    <div class="modal-rodape">
+      <button class="btn-fechar" id="btn-fechar">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Palavras mais comuns da língua portuguesa (substantivos, verbos, adjetivos e expressões do cotidiano)
+  const PALAVRAS_POPULARES = [
+    "casa", "tempo", "ano", "dia", "vida", "mundo", "pessoa", "homem", "mulher", "criança",
+    "amor", "trabalho", "cidade", "país", "água", "fogo", "terra", "céu", "sol", "lua",
+    "estrela", "mar", "rio", "montanha", "floresta", "árvore", "flor", "pedra", "carro", "avião",
+    "barco", "bicicleta", "estrada", "ponte", "escola", "livro", "papel", "caneta", "mesa", "cadeira",
+    "porta", "janela", "telhado", "jardim", "cozinha", "quarto", "banheiro", "comida", "pão", "leite",
+    "café", "chá", "arroz", "feijão", "carne", "peixe", "fruta", "banana", "maçã", "laranja",
+    "uva", "cachorro", "gato", "cavalo", "pássaro", "leão", "macaco", "elefante", "borboleta", "abelha",
+    "música", "dança", "cinema", "teatro", "pintura", "festa", "jogo", "bola", "praia", "viagem",
+    "férias", "dinheiro", "banco", "loja", "mercado", "médico", "professor", "soldado", "rei", "rainha",
+    "príncipe", "castelo", "sonho", "medo", "alegria", "tristeza", "saudade", "felicidade", "amizade", "família",
+    "irmão", "mãe", "pai", "filho", "avó", "tio", "primo", "amigo", "vizinho", "nome",
+    "história", "palavra", "língua", "mensagem", "telefone", "computador", "internet", "luz", "sombra", "noite",
+    "manhã", "tarde", "inverno", "verão", "outono", "primavera", "chuva", "vento", "neve", "nuvem",
+    "ouro", "prata", "ferro", "vidro", "madeira", "ovo", "sapato", "camisa", "chapéu", "relógio",
+    "anel", "coração", "cabeça", "mão", "olho", "boca", "cabelo", "nariz", "ouvido", "sangue",
+    "corpo", "força", "coragem", "paz", "guerra", "verdade", "mentira", "segredo", "mistério", "vitória",
+    "caminho", "porto", "deserto", "ilha", "vulcão", "gelo", "areia", "cor", "vermelho", "azul",
+    "verde", "amarelo", "branco", "preto", "grande", "pequeno", "bonito", "velho", "novo", "alto",
+    "forte", "rápido", "lento", "feliz", "triste", "quente", "frio", "doce", "amargo", "silêncio",
+    "escuro", "claro", "cheio", "vazio", "aberto", "fechado", "correr", "pular", "nadar", "voar",
+    "cantar", "dormir", "comer", "beber", "escrever", "ler", "ouvir", "sentir", "pensar", "sorrir",
+    "chorar", "encontrar", "perder", "guardar", "abrir", "fechar", "começar", "terminar", "esperar", "lembrar"
+  ];
+
+  // Memória do aplicativo
+  const palavrasUsadas = new Set();   // palavras já sorteadas (nunca repetem)
+  const historico = [];                // lista de todas as palavras sorteadas
+
+  const inputQuantidade = document.getElementById("quantidade");
+  const btnSortear = document.getElementById("btn-sortear");
+  const erro = document.getElementById("erro");
+  const contador = document.getElementById("contador");
+  const overlay = document.getElementById("overlay");
+  const lista = document.getElementById("lista");
+  const aviso = document.getElementById("aviso");
+  const btnFechar = document.getElementById("btn-fechar");
+
+  const PALAVRAS = [...new Set(PALAVRAS_POPULARES)];
+  inputQuantidade.max = PALAVRAS.length;
+  atualizarContador();
+
+  function embaralhar(array) {
+    const copia = [...array];
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    return copia;
+  }
+
+  function atualizarContador() {
+    contador.textContent = `Palavras sorteadas até agora: ${historico.length} · Disponíveis: ${PALAVRAS.length - palavrasUsadas.size}`;
+  }
+
+  function sortear() {
+    erro.textContent = "";
+    const quantidade = parseInt(inputQuantidade.value, 10);
+
+    if (isNaN(quantidade) || quantidade < 1) {
+      erro.textContent = "Informe um número válido (mínimo 1).";
+      return;
+    }
+    if (quantidade > PALAVRAS.length) {
+      erro.textContent = `O máximo permitido é ${PALAVRAS.length} palavras.`;
+      return;
+    }
+
+    let disponiveis = PALAVRAS.filter(p => !palavrasUsadas.has(p));
+    let reiniciou = false;
+
+    if (disponiveis.length < quantidade) {
+      // Todas as palavras já foram usadas: reinicia o ciclo
+      palavrasUsadas.clear();
+      disponiveis = [...PALAVRAS];
+      reiniciou = true;
+    }
+
+    const sorteadas = embaralhar(disponiveis).slice(0, quantidade);
+    sorteadas.forEach(p => palavrasUsadas.add(p));
+    historico.push(...sorteadas);
+
+    exibirModal(sorteadas, reiniciou);
+    atualizarContador();
+  }
+
+  function exibirModal(palavras, reiniciou) {
+    lista.innerHTML = "";
+    palavras.forEach(p => {
+      const li = document.createElement("li");
+      li.textContent = p;
+      li.title = "Clique para marcar como utilizada";
+      li.addEventListener("click", () => {
+        li.classList.toggle("usada");
+      });
+      lista.appendChild(li);
+    });
+
+    if (reiniciou) {
+      aviso.textContent = "Todas as palavras já haviam sido usadas. A lista foi reiniciada.";
+      aviso.hidden = false;
+    } else {
+      aviso.hidden = true;
+    }
+
+    overlay.classList.add("aberto");
+    btnFechar.focus();
+  }
+
+  function fecharModal() {
+    overlay.classList.remove("aberto");
+  }
+
+  btnSortear.addEventListener("click", sortear);
+  btnFechar.addEventListener("click", fecharModal);
+  overlay.addEventListener("click", e => {
+    if (e.target === overlay) fecharModal();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && overlay.classList.contains("aberto")) fecharModal();
+  });
+  inputQuantidade.addEventListener("keydown", e => {
+    if (e.key === "Enter") sortear();
+  });
+</script>
+
+</body>
+</html>
